@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Leitner",
+  "version": "1.0",
+
+  "description": "Displays local library availabity for Hardcover books.",
+
+  "host_permissions": [
+    "*://hardcover.app/books/*",
+    "https://gateway.bibliocommons.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://hardcover.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "permissions": ["webRequest", "tabs"]
+}
