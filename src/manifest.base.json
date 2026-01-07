@@ -2,9 +2,10 @@
   "manifest_version": 3,
   "name": "Leitner",
   "version": "1.0",
-
   "description": "Displays local library availabity for Hardcover books.",
-
+  "author": {
+    "name": "Edward Prado"
+  },
   "host_permissions": [
     "*://hardcover.app/books/*",
     "https://gateway.bibliocommons.com/*"

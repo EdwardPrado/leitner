@@ -1,0 +1,15 @@
+{
+  "author": "Edward Prado",
+  "content_scripts": [
+    {
+      "matches": ["*://hardcover.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "permissions": ["webRequest", "tabs"]
+}
