@@ -1,0 +1,178 @@
+/* CSS Reset */
+/* 1. Use a more-intuitive box-sizing model */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+*:not(dialog) {
+  margin: 0;
+}
+
+/* 3. Enable keyword animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
+  }
+}
+
+body {
+  /* 4. Add accessible line-height */
+  line-height: 1.5;
+  /* 5. Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 6. Improve media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 7. Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 8. Avoid text overflows */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* 9. Improve line wrapping */
+p {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+/*
+        10. Create a root stacking context
+      */
+#root,
+#__next {
+  isolation: isolate;
+}
+
+/* Custom CSS */
+
+:root {
+  --white-primary: #e1e5ec;
+  --white-secondary: #d4d8df;
+  --black-primary: #1f2937;
+  --black-secondary: #374151;
+  --black-tertiary: #6a7282;
+  --black-accent: #374151;
+}
+
+* {
+  font-family: "Monterrat", sans-serif;
+}
+
+body {
+  padding: 1rem 1.5rem;
+  background-color: var(--black-primary);
+  color: var(--white-primary);
+  border: 2px solid var(--black-secondary);
+  min-width: 400px;
+  border-radius: 8px;
+}
+
+a {
+  color: var(--white-primary);
+  text-decoration: none;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h1,
+.title-bar span {
+  font-family: "Roboto", sans-serif;
+}
+
+.title-bar {
+  border-bottom: 1px solid var(--black-accent);
+  margin-bottom: 0.75rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form input {
+  background-color: transparent;
+  border: 2px solid var(--black-tertiary);
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: var(--white-primary);
+  font-weight: bold;
+}
+
+form input:focus-visible {
+  outline: none;
+}
+
+form input:nth-of-type(1) {
+  margin-bottom: 1rem;
+}
+
+form label {
+  margin: 0.25rem 0;
+}
+
+#save-btn {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  font-weight: bold;
+  background-color: var(--white-primary);
+  border-radius: 4px;
+  border: none;
+  color: var(--black-primary);
+  cursor: pointer;
+}
+
+#save-btn:active {
+  background-color: var(--white-primary);
+  background-color: var(--white-secondary);
+}
+
+form .saved {
+  color: rgba(31, 41, 55, 0.4);
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  padding-top: 0.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--black-accent);
+}
+
+footer span {
+  opacity: 0.4;
+}

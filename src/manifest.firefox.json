@@ -11,5 +11,9 @@
     "scripts": ["background.js"],
     "type": "module"
   },
-  "permissions": ["webRequest", "tabs"]
+  "action": {
+    "default_title": "Leitner",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["webRequest", "tabs", "storage"]
 }
