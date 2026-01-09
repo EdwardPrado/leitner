@@ -1,4 +1,4 @@
-import { LEITNER_MESSAGES, logConsoleMessage } from "./util"
+import { LEITNER_MESSAGES, logConsoleError } from "./util"
 
 const TIMEOUT_DELAY = 2000
 const REGEX_BOOK_URL = /^.*hardcover\.app\/books\/[^\/]+$/
@@ -24,44 +24,10 @@ function onNavigation() {
 }
 
 browser.runtime.onMessage.addListener(async (message) => {
-  if (message.type === LEITNER_MESSAGES[1]) {
-    const details = {}
-
-    details["Superheader"] = "Ottawa Public Library"
-    details["Link"] = message.link
-    details[
-      "Highlighted"
-    ] = `${message.availableCopies} of ${message.totalCopies} copies available`
-
-    if (message.heldCopies > 0) {
-      if (message.heldCopies > 1) {
-        details["Subheader"] = `${message.heldCopies} copies on hold`
-      } else {
-        details["Subheader"] = `${message.heldCopies} copy on hold`
-      }
-    }
-
-    if (message.availableCopies !== 0) {
-      details["Content"] = "Borrow Book"
-    } else {
-      details["Content"] = "Hold Book"
-    }
-
-    addAvailabilityElement(details)
-  } else if (message.type === LEITNER_MESSAGES[0]) {
-    const details = {}
-
-    details["Superheader"] = "Ottawa Public Library"
-    details["Content"] = "Not Stocked"
-
-    addAvailabilityElement(details)
-  }
+  handleIncomingMessage(message)
 })
 
 function addAvailabilityElement(elementDetails) {
-  // Element Details:
-  // Subtitle, Superheader, highlighted text, primary text, link
-
   try {
     const parentNode = document.querySelector(
       ".min-h-screenHeightWithoutHeader"
@@ -133,7 +99,7 @@ function addAvailabilityElement(elementDetails) {
 
     parentNode.insertBefore(newNodeContainer, parentNode.childNodes[0])
   } catch (e) {
-    logConsoleMessage("addAvailabilityElement", e)
+    logConsoleError("addAvailabilityElement", e)
   }
 }
 
@@ -159,4 +125,59 @@ function sendBiblioRequest() {
       authors,
     })
   }, TIMEOUT_DELAY)
+}
+
+async function getLibraryInfo() {
+  try {
+    return await browser.storage.local
+      .get("libraryInfo")
+      .then((res) => res.libraryInfo)
+  } catch (e) {
+    logConsoleError("getLibraryInfo", e)
+  }
+}
+
+async function handleIncomingMessage(message) {
+  const libraryName = await getLibraryInfo()
+
+  if (message.type === LEITNER_MESSAGES[1]) {
+    try {
+      const details = {}
+
+      details["Superheader"] = `${libraryName.name} Public Library`
+      details["Link"] = message.link
+      details[
+        "Highlighted"
+      ] = `${message.availableCopies} of ${message.totalCopies} copies available`
+
+      if (message.heldCopies > 0) {
+        if (message.heldCopies > 1) {
+          details["Subheader"] = `${message.heldCopies} copies on hold`
+        } else {
+          details["Subheader"] = `${message.heldCopies} copy on hold`
+        }
+      }
+
+      if (message.availableCopies !== 0) {
+        details["Content"] = "Borrow Book"
+      } else {
+        details["Content"] = "Hold Book"
+      }
+
+      addAvailabilityElement(details)
+    } catch (e) {
+      logConsoleError("handleIncomingMessage - Available", e)
+    }
+  } else if (message.type === LEITNER_MESSAGES[0]) {
+    try {
+      const details = {}
+
+      details["Superheader"] = `${libraryName.name} Public Library`
+      details["Content"] = "Not Stocked"
+
+      addAvailabilityElement(details)
+    } catch (e) {
+      logConsoleError("handleIncomingMessage - Unavailable", e)
+    }
+  }
 }

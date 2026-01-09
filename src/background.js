@@ -1,7 +1,6 @@
-import { LEITNER_MESSAGES, logConsoleMessage } from "./util"
+import { LEITNER_MESSAGES, logConsoleError, logConsoleMessage } from "./util"
 
 const REGEX_AFTER_FINAL_SLASH = /(?!.*\/).+/
-const LIBRARY = "ottawa"
 
 browser.tabs.query({ active: true }).then((tabs) => {
   for (const tab of tabs) {
@@ -19,33 +18,37 @@ browser.runtime.onMessage.addListener(async (message) => {
 })
 
 async function queryTitle(title, authors) {
-  await fetch(
-    `https://gateway.bibliocommons.com/v2/libraries/${LIBRARY}/rss/search?locked=false&searchType=bl&query=title:(${title})+++formatcode:(BOARD_BK%20OR%20BK%20OR%20GRAPHIC_NOVEL%20OR%20LPRINT%20OR%20BIG_BK%20OR%20PAPERBACK%20OR%20PICTURE_BOOK%20)`
-  )
-    .then((rawRes) => rawRes.text())
-    .then(async (res) => {
-      const parser = new DOMParser()
-      const parsedRes = parser.parseFromString(res, "text/xml")
+  const library = await getLibraryLink()
 
-      try {
-        if (parsedRes.querySelectorAll("item").length !== 0) {
-          await queryBookID(getMatchingBookLink(authors, parsedRes))
-        } else {
+  if (library) {
+    await fetch(
+      `https://gateway.bibliocommons.com/v2/libraries/${library}/rss/search?locked=false&searchType=bl&query=title:(${title})+++formatcode:(BOARD_BK%20OR%20BK%20OR%20GRAPHIC_NOVEL%20OR%20LPRINT%20OR%20BIG_BK%20OR%20PAPERBACK%20OR%20PICTURE_BOOK%20)`
+    )
+      .then((rawRes) => rawRes.text())
+      .then(async (res) => {
+        const parser = new DOMParser()
+        const parsedRes = parser.parseFromString(res, "text/xml")
+
+        try {
+          if (parsedRes.querySelectorAll("item").length !== 0) {
+            await queryBookID(getMatchingBookLink(authors, parsedRes))
+          } else {
+            browser.tabs.query({ active: true }).then((tabs) => {
+              browser.tabs.sendMessage(tabs[0].id, {
+                type: LEITNER_MESSAGES[0],
+              })
+            })
+          }
+        } catch (e) {
           browser.tabs.query({ active: true }).then((tabs) => {
             browser.tabs.sendMessage(tabs[0].id, {
               type: LEITNER_MESSAGES[0],
             })
           })
         }
-      } catch (e) {
-        browser.tabs.query({ active: true }).then((tabs) => {
-          browser.tabs.sendMessage(tabs[0].id, {
-            type: LEITNER_MESSAGES[0],
-          })
-        })
-      }
-    })
-    .catch((error) => logConsoleMessage(`queryTitle`, error))
+      })
+      .catch((error) => logConsoleMessage(`queryTitle`, error))
+  }
 }
 
 async function queryBookID(id) {
@@ -53,34 +56,38 @@ async function queryBookID(id) {
   let totalCopies = 0
   let heldCopies = 0
 
-  await fetch(
-    `https://gateway.bibliocommons.com/v2/libraries/${LIBRARY}/bibs/${id}/availability`
-  )
-    .then((rawRes) => rawRes.json())
-    .then(async (res) => {
-      if (res.entities?.availabilities) {
-        availableCopies = res.entities.availabilities[id].availableCopies
-        totalCopies = res.entities.availabilities[id].totalCopies
-        heldCopies = res.entities.availabilities[id].heldCopies
+  const library = await getLibraryLink()
 
-        browser.tabs.query({ active: true }).then((tabs) => {
-          browser.tabs.sendMessage(tabs[0].id, {
-            type: LEITNER_MESSAGES[1],
-            availableCopies,
-            totalCopies,
-            heldCopies,
-            link: `https://${LIBRARY}.bibliocommons.com/v2/record/${id}?&utm_content=title_link&utm_medium=onpage_catalog_view`,
+  if (library) {
+    await fetch(
+      `https://gateway.bibliocommons.com/v2/libraries/${library}/bibs/${id}/availability`
+    )
+      .then((rawRes) => rawRes.json())
+      .then(async (res) => {
+        if (res.entities?.availabilities) {
+          availableCopies = res.entities.availabilities[id].availableCopies
+          totalCopies = res.entities.availabilities[id].totalCopies
+          heldCopies = res.entities.availabilities[id].heldCopies
+
+          browser.tabs.query({ active: true }).then((tabs) => {
+            browser.tabs.sendMessage(tabs[0].id, {
+              type: LEITNER_MESSAGES[1],
+              availableCopies,
+              totalCopies,
+              heldCopies,
+              link: `https://${library}.bibliocommons.com/v2/record/${id}?&utm_content=title_link&utm_medium=onpage_catalog_view`,
+            })
           })
-        })
-      } else {
-        browser.tabs.query({ active: true }).then((tabs) => {
-          browser.tabs.sendMessage(tabs[0].id, {
-            type: LEITNER_MESSAGES[0],
+        } else {
+          browser.tabs.query({ active: true }).then((tabs) => {
+            browser.tabs.sendMessage(tabs[0].id, {
+              type: LEITNER_MESSAGES[0],
+            })
           })
-        })
-      }
-    })
-    .catch((error) => logConsoleMessage(`queryBookId`, error))
+        }
+      })
+      .catch((error) => logConsoleMessage(`queryBookId`, error))
+  }
 }
 
 function cleanupAuthorName(name) {
@@ -116,4 +123,17 @@ function getMatchingBookLink(authors, parsedXml) {
   }
 
   return matchingLink?.match(REGEX_AFTER_FINAL_SLASH)
+}
+
+async function getLibraryLink() {
+  const REGEX_BIBLIO_NAME =
+    /(?:^|\/\/|www\.)([a-zA-Z0-9-]+)\.bibliocommons\.com/
+
+  try {
+    return await browser.storage.local
+      .get("libraryInfo")
+      .then((res) => res?.libraryInfo?.link.match(REGEX_BIBLIO_NAME)[1])
+  } catch (e) {
+    logConsoleError(getLibraryLink, e)
+  }
 }

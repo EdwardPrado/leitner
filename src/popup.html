@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <div class="title-bar">
+      <h1>Leitner</h1>
+    </div>
+    <form id="leitnerForm">
+      <label for="libraryName">Library Name</label>
+      <input
+        type="text"
+        name="libraryName"
+        id="libraryName"
+        required
+        placeholder="Ottawa"
+        minlength="2"
+        maxlength="30"
+      />
+      <label for="libraryLink">Biblio Commons Link</label>
+      <input
+        title=""
+        type="text"
+        name="libraryLink"
+        id="libraryLink"
+        required
+        placeholder="ottawa.bibliocommons.com"
+        pattern="(http:\/\/)?(([^.]+)\.)?bibliocommons\.com"
+        maxlength="80"
+      />
+      <input type="submit" value="Save" id="save-btn" />
+    </form>
+    <footer>
+      <span>v0.0.0</span>
+      <a href="https://github.com/EdwardPrado/leitner/issues">Report Issue</a>
+    </footer>
+    <script src="./popup.js"></script>
+  </body>
+</html>
