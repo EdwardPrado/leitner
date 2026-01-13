@@ -39,7 +39,11 @@ export function getMatchingBookLink(authors, parsedXml) {
     const normalizedName = cleanupAuthorName(creator)
 
     for (let i = 0; i < authors.length; i++) {
-      if (normalizedName === authors[i]) {
+      const REGEX_LEAVE_LAST_PERIOD = /[. ](?=.*[.])/g
+      const cleanedAuthorName = authors[i]
+        .replace(REGEX_LEAVE_LAST_PERIOD, ".")
+        .replace("..", ".")
+      if (normalizedName === cleanedAuthorName) {
         const link = item.querySelector("link")?.textContent
         if (link) matchingLink = link
 
