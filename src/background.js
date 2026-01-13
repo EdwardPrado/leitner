@@ -1,19 +1,25 @@
-import { LEITNER_MESSAGES, logConsoleError, logConsoleMessage } from "./util"
+import { getMatchingBookLink, LEITNER_MESSAGES, logConsoleError } from "./util"
 
-const REGEX_AFTER_FINAL_SLASH = /(?!.*\/).+/
+initiateOffscreen()
 
-browser.tabs.query({ active: true }).then((tabs) => {
+chrome.tabs.query({ active: true }).then((tabs) => {
   for (const tab of tabs) {
-    browser.scripting.executeScript({
+    chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ["content.js"],
     })
   }
 })
 
-browser.runtime.onMessage.addListener(async (message) => {
+chrome.runtime.onMessage.addListener(async (message) => {
   if (message.type === LEITNER_MESSAGES[2]) {
     await queryTitle(message.title, message.authors)
+  } else if (message.type === LEITNER_MESSAGES[4]) {
+    if (message.isStocked) {
+      await queryBookID(message.bookLink)
+    } else {
+      sendNotStocked()
+    }
   }
 })
 
@@ -26,28 +32,16 @@ async function queryTitle(title, authors) {
     )
       .then((rawRes) => rawRes.text())
       .then(async (res) => {
-        const parser = new DOMParser()
-        const parsedRes = parser.parseFromString(res, "text/xml")
-
         try {
-          if (parsedRes.querySelectorAll("item").length !== 0) {
-            await queryBookID(getMatchingBookLink(authors, parsedRes))
-          } else {
-            browser.tabs.query({ active: true }).then((tabs) => {
-              browser.tabs.sendMessage(tabs[0].id, {
-                type: LEITNER_MESSAGES[0],
-              })
-            })
-          }
+          const parser = new DOMParser()
+          const parsedRes = parser.parseFromString(res, "text/xml")
+
+          await sendXMLEntries(parsedRes, authors)
         } catch (e) {
-          browser.tabs.query({ active: true }).then((tabs) => {
-            browser.tabs.sendMessage(tabs[0].id, {
-              type: LEITNER_MESSAGES[0],
-            })
-          })
+          await chromeHandleXMLRes(res, authors)
         }
       })
-      .catch((error) => logConsoleMessage(`queryTitle`, error))
+      .catch((error) => logConsoleError(`queryTitle`, error))
   }
 }
 
@@ -69,8 +63,8 @@ async function queryBookID(id) {
           totalCopies = res.entities.availabilities[id].totalCopies
           heldCopies = res.entities.availabilities[id].heldCopies
 
-          browser.tabs.query({ active: true }).then((tabs) => {
-            browser.tabs.sendMessage(tabs[0].id, {
+          chrome.tabs.query({ active: true }).then((tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id, {
               type: LEITNER_MESSAGES[1],
               availableCopies,
               totalCopies,
@@ -79,50 +73,15 @@ async function queryBookID(id) {
             })
           })
         } else {
-          browser.tabs.query({ active: true }).then((tabs) => {
-            browser.tabs.sendMessage(tabs[0].id, {
+          chrome.tabs.query({ active: true }).then((tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id, {
               type: LEITNER_MESSAGES[0],
             })
           })
         }
       })
-      .catch((error) => logConsoleMessage(`queryBookId`, error))
+      .catch((error) => logConsoleError(`queryBookId`, error))
   }
-}
-
-function cleanupAuthorName(name) {
-  const parts = name.split(",").map((p) => p.trim())
-  if (parts.length === 2) {
-    return `${parts[1]} ${parts[0]}`
-  }
-
-  return name.trim()
-}
-
-function getMatchingBookLink(authors, parsedXml) {
-  let matchingLink
-
-  const items = parsedXml.querySelectorAll("item")
-
-  for (const item of items) {
-    const creator = item.childNodes[6]?.textContent
-    if (!creator) break
-
-    const normalizedName = cleanupAuthorName(creator)
-
-    for (let i = 0; i < authors.length; i++) {
-      if (normalizedName === authors[i]) {
-        const link = item.querySelector("link")?.textContent
-        if (link) matchingLink = link
-
-        break
-      }
-    }
-
-    if (matchingLink) break
-  }
-
-  return matchingLink?.match(REGEX_AFTER_FINAL_SLASH)
 }
 
 async function getLibraryLink() {
@@ -130,10 +89,46 @@ async function getLibraryLink() {
     /(?:^|\/\/|www\.)([a-zA-Z0-9-]+)\.bibliocommons\.com/
 
   try {
-    return await browser.storage.local
+    return await chrome.storage.local
       .get("libraryInfo")
       .then((res) => res?.libraryInfo?.link.match(REGEX_BIBLIO_NAME)[1])
   } catch (e) {
     logConsoleError(getLibraryLink, e)
   }
+}
+
+async function sendXMLEntries(parsedRes, authors) {
+  try {
+    if (parsedRes.querySelectorAll("item").length !== 0) {
+      await queryBookID(getMatchingBookLink(authors, parsedRes))
+    } else {
+      sendNotStocked()
+    }
+  } catch (e) {
+    sendNotStocked()
+  }
+}
+
+function sendNotStocked() {
+  chrome.tabs.query({ active: true }).then((tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, {
+      type: LEITNER_MESSAGES[0],
+    })
+  })
+}
+
+async function chromeHandleXMLRes(res, authors) {
+  chrome.runtime.sendMessage({
+    type: LEITNER_MESSAGES[3],
+    rawXML: res,
+    authors,
+  })
+}
+
+async function initiateOffscreen() {
+  await chrome.offscreen.createDocument({
+    url: chrome.runtime.getURL("offscreen.html"),
+    reasons: ["DOM_PARSER"],
+    justification: "Parsing XML",
+  })
 }

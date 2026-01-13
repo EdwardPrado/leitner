@@ -23,7 +23,7 @@ function onNavigation() {
   }
 }
 
-browser.runtime.onMessage.addListener(async (message) => {
+chrome.runtime.onMessage.addListener(async (message) => {
   handleIncomingMessage(message)
 })
 
@@ -108,7 +108,7 @@ function sendBiblioRequest() {
   setTimeout(() => {
     const title = document.querySelector("h1").innerText
     const rawAuthors = document.getElementsByClassName(
-      "transition-all underline-offset-2 text-gray-800 dark:text-gray-100 text-md underline hover:no-underline flex-inline flex-row items-center"
+      "transition-all underline-offset-2 text-md underline hover:no-underline flex-inline flex-row items-center"
     )
     let authors = []
 
@@ -119,7 +119,7 @@ function sendBiblioRequest() {
     // the HTML has duplicate entries for the authors at smaller screen sizes hidden within it
     authors = [...new Set(authors)]
 
-    browser.runtime.sendMessage({
+    chrome.runtime.sendMessage({
       type: LEITNER_MESSAGES[2],
       title,
       authors,
@@ -129,7 +129,7 @@ function sendBiblioRequest() {
 
 async function getLibraryInfo() {
   try {
-    return await browser.storage.local
+    return await chrome.storage.local
       .get("libraryInfo")
       .then((res) => res.libraryInfo)
   } catch (e) {

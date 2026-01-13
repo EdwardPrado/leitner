@@ -12,7 +12,7 @@ form.addEventListener("submit", async (event) => {
   const inputName = document.getElementById("libraryName")
   const inputLink = document.getElementById("libraryLink")
 
-  await browser.storage.local.set({
+  await chrome.storage.local.set({
     libraryInfo: {
       name: inputName.value,
       link: inputLink.value,
@@ -31,7 +31,7 @@ form.addEventListener("submit", async (event) => {
 })
 
 async function popup() {
-  const libraryInfo = await browser.storage.local
+  const libraryInfo = await chrome.storage.local
     .get("libraryInfo")
     .then((res) => res.libraryInfo)
 
