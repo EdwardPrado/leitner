@@ -68,6 +68,11 @@ async function build(targetBrowser) {
 
   fs.copyFileSync("src/popup/popup.html", path.join(targetDir, "popup.html"))
   fs.copyFileSync("src/popup/popup.js", path.join(targetDir, "popup.js"))
+  fs.mkdirSync(`${OUTPUT_DIR}/${targetBrowser}/assets`, { recursive: true })
+  fs.copyFileSync(
+    "src/assets/leitner-logo.png",
+    path.join(`${OUTPUT_DIR}/${targetBrowser}/assets`, "leitner-logo.png")
+  )
 
   console.log(`Built ${targetBrowser} distro`)
 }

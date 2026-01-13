@@ -10,7 +10,8 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": "./assets/leitner-logo.png"
   },
   "permissions": ["offscreen", "scripting", "webRequest", "tabs", "storage"]
 }
