@@ -54,10 +54,12 @@ export function getMatchingBookLink(authors, parsedXml) {
 }
 
 function cleanupAuthorName(name) {
-  const parts = name.split(",").map((p) => p.trim())
+  const cleanedName = name.replaceAll(". ", ".")
+  const parts = cleanedName.split(",").map((p) => p.trim())
+
   if (parts.length === 2) {
     return `${parts[1]} ${parts[0]}`
   }
 
-  return name.trim()
+  return cleanedName.trim()
 }
