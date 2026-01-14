@@ -11,19 +11,19 @@ chrome.tabs.query({ active: true }).then((tabs) => {
   }
 })
 
-chrome.runtime.onMessage.addListener(async (message) => {
+chrome.runtime.onMessage.addListener(async (message, sender) => {
   if (message.type === LEITNER_MESSAGES[2]) {
-    await queryTitle(message.title, message.authors)
+    await queryTitle(message.title, message.authors, sender.tab.id)
   } else if (message.type === LEITNER_MESSAGES[4]) {
     if (message.isStocked) {
-      await queryBookID(message.bookLink)
+      await queryBookID(message.bookLink, message.tabId)
     } else {
-      sendNotStocked()
+      sendNotStocked(message.tabId)
     }
   }
 })
 
-async function queryTitle(title, authors) {
+async function queryTitle(title, authors, tabId) {
   const library = await getLibraryLink()
 
   if (library) {
@@ -36,16 +36,16 @@ async function queryTitle(title, authors) {
           const parser = new DOMParser()
           const parsedRes = parser.parseFromString(res, "text/xml")
 
-          await sendXMLEntries(parsedRes, authors)
+          await sendXMLEntries(parsedRes, authors, tabId)
         } catch (e) {
-          await chromeHandleXMLRes(res, authors)
+          await chromeHandleXMLRes(res, authors, tabId)
         }
       })
       .catch((error) => logConsoleError(`queryTitle`, error))
   }
 }
 
-async function queryBookID(id) {
+async function queryBookID(id, tabId) {
   let availableCopies = 0
   let totalCopies = 0
   let heldCopies = 0
@@ -63,20 +63,16 @@ async function queryBookID(id) {
           totalCopies = res.entities.availabilities[id].totalCopies
           heldCopies = res.entities.availabilities[id].heldCopies
 
-          chrome.tabs.query({ active: true }).then((tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              type: LEITNER_MESSAGES[1],
-              availableCopies,
-              totalCopies,
-              heldCopies,
-              link: `https://${library}.bibliocommons.com/v2/record/${id}?&utm_content=title_link&utm_medium=onpage_catalog_view`,
-            })
+          chrome.tabs.sendMessage(tabId, {
+            type: LEITNER_MESSAGES[1],
+            availableCopies,
+            totalCopies,
+            heldCopies,
+            link: `https://${library}.bibliocommons.com/v2/record/${id}?&utm_content=title_link&utm_medium=onpage_catalog_view`,
           })
         } else {
-          chrome.tabs.query({ active: true }).then((tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              type: LEITNER_MESSAGES[0],
-            })
+          chrome.tabs.sendMessage(tabId, {
+            type: LEITNER_MESSAGES[0],
           })
         }
       })
@@ -97,31 +93,30 @@ async function getLibraryLink() {
   }
 }
 
-async function sendXMLEntries(parsedRes, authors) {
+async function sendXMLEntries(parsedRes, authors, tabId) {
   try {
     if (parsedRes.querySelectorAll("item").length !== 0) {
-      await queryBookID(getMatchingBookLink(authors, parsedRes))
+      await queryBookID(getMatchingBookLink(authors, parsedRes), tabId)
     } else {
-      sendNotStocked()
+      sendNotStocked(tabId)
     }
   } catch (e) {
-    sendNotStocked()
+    sendNotStocked(tabId)
   }
 }
 
-function sendNotStocked() {
-  chrome.tabs.query({ active: true }).then((tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, {
-      type: LEITNER_MESSAGES[0],
-    })
+function sendNotStocked(tabId) {
+  chrome.tabs.sendMessage(tabId, {
+    type: LEITNER_MESSAGES[0],
   })
 }
 
-async function chromeHandleXMLRes(res, authors) {
+async function chromeHandleXMLRes(res, authors, tabId) {
   chrome.runtime.sendMessage({
     type: LEITNER_MESSAGES[3],
     rawXML: res,
     authors,
+    tabId,
   })
 }
 

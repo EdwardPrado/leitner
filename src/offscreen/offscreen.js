@@ -15,11 +15,13 @@ function handleIncomingMessage(message) {
           type: LEITNER_MESSAGES[4],
           isStocked: true,
           bookLink: getMatchingBookLink(message.authors, parsedRes),
+          tabId: message.tabId,
         })
       } else {
         chrome.runtime.sendMessage({
           type: LEITNER_MESSAGES[4],
           isStocked: false,
+          tabId: message.tabId,
         })
       }
     }
