@@ -1,6 +1,6 @@
 {
   "name": "leitner-extension",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Displays the availability of books from your local library on Hardcover.",
   "homepage": "https://github.com/EdwardPrado/leitner#readme",
   "bugs": {
@@ -18,7 +18,7 @@
     "build": "node build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
+  "devDependencies": {
     "esbuild": "^0.27.2"
   }
 }
