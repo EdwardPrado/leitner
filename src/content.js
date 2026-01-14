@@ -8,16 +8,11 @@ sessionStorage.removeItem(LEITNER_STATUS)
 
 let lastUrl = location.href
 
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    onNavigation()
-  }
-})
-
 onNavigation()
 
 // Detects page changes since Hardcover is a SPA so it doesn't trigger page change naturally
 new MutationObserver(() => {
+  sessionStorage.removeItem(LEITNER_STATUS)
   if (location.href !== lastUrl) {
     lastUrl = location.href
     onNavigation()

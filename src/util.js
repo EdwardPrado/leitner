@@ -40,9 +40,14 @@ export function getMatchingBookLink(authors, parsedXml) {
 
     for (let i = 0; i < authors.length; i++) {
       const REGEX_LEAVE_LAST_PERIOD = /[. ](?=.*[.])/g
-      const cleanedAuthorName = authors[i]
-        .replace(REGEX_LEAVE_LAST_PERIOD, ".")
-        .replace("..", ".")
+      let cleanedAuthorName = authors[i]
+
+      if (authors[i].split(".").length - 1 > 1) {
+        cleanedAuthorName = authors[i]
+          .replace(REGEX_LEAVE_LAST_PERIOD, ".")
+          .replace("..", ".")
+      }
+
       if (normalizedName === cleanedAuthorName) {
         const link = item.querySelector("link")?.textContent
         if (link) matchingLink = link
