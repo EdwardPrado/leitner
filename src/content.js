@@ -2,12 +2,19 @@ import { LEITNER_MESSAGES, logConsoleError } from "./util"
 
 const TIMEOUT_DELAY = 2000
 const REGEX_BOOK_URL = /^.*hardcover\.app\/books\/[^\/]+$/
+const LEITNER_STATUS = "RAN"
+
+sessionStorage.removeItem(LEITNER_STATUS)
 
 let lastUrl = location.href
 
-if (location.href.match(REGEX_BOOK_URL)) {
-  sendBiblioRequest()
-}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    onNavigation()
+  }
+})
+
+onNavigation()
 
 // Detects page changes since Hardcover is a SPA so it doesn't trigger page change naturally
 new MutationObserver(() => {
@@ -18,8 +25,12 @@ new MutationObserver(() => {
 }).observe(document, { subtree: true, childList: true })
 
 function onNavigation() {
-  if (location.href.match(REGEX_BOOK_URL)) {
-    sendBiblioRequest()
+  // Prevent script from running again if user switches away then back to this tab
+  if (!sessionStorage.getItem(LEITNER_STATUS)) {
+    if (location.href.match(REGEX_BOOK_URL)) {
+      sessionStorage.setItem(LEITNER_STATUS, "true")
+      sendBiblioRequest()
+    }
   }
 }
 
