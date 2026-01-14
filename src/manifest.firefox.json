@@ -16,5 +16,13 @@
     "default_popup": "popup.html",
     "default_icon": "./assets/leitner-logo.png"
   },
-  "permissions": ["webRequest", "tabs", "storage"]
+  "permissions": ["webRequest", "tabs", "storage"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{24af05f4-12a8-425e-afb7-a2df1b5cefad}",
+      "data_collection_permissions": {
+        "required": ["websiteContent"]
+      }
+    }
+  }
 }

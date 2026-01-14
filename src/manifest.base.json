@@ -22,9 +22,9 @@
     "type": "module"
   },
   "icons": {
-    "16": "./assets/leitner-logo.png",
-    "32": "./assets/leitner-logo.png",
-    "48": "./assets/leitner-logo.png",
-    "128": "./assets/leitner-logo.png"
+    "16": "assets/leitner-logo.png",
+    "32": "assets/leitner-logo.png",
+    "48": "assets/leitner-logo.png",
+    "128": "assets/leitner-logo.png"
   }
 }
